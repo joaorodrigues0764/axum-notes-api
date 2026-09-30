@@ -8,11 +8,11 @@ use dotenv::dotenv;
 use route::create_router;
 use axum::http::{
     header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
-    HeatherValue, Method,
-}
+    HeaderValue, Method,
+};
 
 pub struct AppState {
-    dg: Pool<Postgres>,
+    db: Pool<Postgres>,
 }
 use tower_http::cors::CorsLayer;
 
