@@ -3,5 +3,5 @@
 version = 4
 
 [[package]]
-name = "axum_post_yt"
+name = "axum-notes-api"
 version = "0.1.0"
