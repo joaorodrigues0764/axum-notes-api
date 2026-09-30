@@ -3,20 +3,20 @@ mod model;
 mod route;
 mod schema;
 
-use std::sync::Arc;
+use axum::http::{
+    HeaderValue, Method,
+    header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
+};
 use dotenv::dotenv;
 use route::create_router;
-use axum::http::{
-    header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
-    HeaderValue, Method,
-};
+use std::sync::Arc;
 
 pub struct AppState {
     db: Pool<Postgres>,
 }
 use tower_http::cors::CorsLayer;
 
-use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
+use sqlx::{Pool, Postgres, postgres::PgPoolOptions};
 
 #[tokio::main]
 async fn main() {
@@ -43,7 +43,7 @@ async fn main() {
         .allow_methods([Method::GET, Method::POST, Method::PATCH, Method::DELETE])
         .allow_credentials(true)
         .allow_headers([AUTHORIZATION, ACCEPT, CONTENT_TYPE]);
-        
+
     let app = create_router(Arc::new(AppState { db: pool.clone() })).layer(cors);
     println!("Server started successfully");
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.unwrap();

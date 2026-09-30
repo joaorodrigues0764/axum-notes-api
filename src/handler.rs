@@ -1,17 +1,17 @@
 use std::sync::Arc;
 
 use axum::{
+    Json,
     extract::{Path, Query, State},
     http::StatusCode,
     response::IntoResponse,
-    Json,
 };
 use serde_json::json;
 
 use crate::{
+    AppState,
     model::NoteModel,
     schema::{CreateNoteSchema, FilterOptions, UpdateNoteSchema},
-    AppState,
 };
 
 pub async fn health_checker_handler() -> impl IntoResponse {

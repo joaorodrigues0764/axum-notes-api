@@ -1,16 +1,16 @@
 use std::sync::Arc;
 
 use axum::{
-    routing::{get, post},
     Router,
+    routing::{get, post},
 };
 
 use crate::{
+    AppState,
     handler::{
         create_note_handler, delete_note_handler, edit_note_handler, get_note_handler,
         health_checker_handler, note_list_handler,
     },
-    AppState,
 };
 
 pub fn create_router(app_state: Arc<AppState>) -> Router {
