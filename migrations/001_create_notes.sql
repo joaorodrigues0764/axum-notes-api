@@ -1,4 +1,6 @@
-CREATE TABLE notes (
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+CREATE TABLE IF NOT EXISTS notes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title TEXT NOT NULL,
     content TEXT NOT NULL,
@@ -7,3 +9,17 @@ CREATE TABLE notes (
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
+
+UPDATE notes SET published = FALSE WHERE published IS NULL;
+UPDATE notes SET created_at = CURRENT_TIMESTAMP WHERE created_at IS NULL;
+UPDATE notes SET updated_at = CURRENT_TIMESTAMP WHERE updated_at IS NULL;
+
+ALTER TABLE notes
+    ALTER COLUMN published SET DEFAULT FALSE,
+    ALTER COLUMN published SET NOT NULL,
+    ALTER COLUMN created_at SET DEFAULT CURRENT_TIMESTAMP,
+    ALTER COLUMN created_at SET NOT NULL,
+    ALTER COLUMN updated_at SET DEFAULT CURRENT_TIMESTAMP,
+    ALTER COLUMN updated_at SET NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_notes_created_at ON notes (created_at DESC, id DESC);
