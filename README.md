@@ -1,30 +1,34 @@
 # Axum Notes API
 
-A RESTful Notes API built with Rust, Axum, SQLx, and PostgreSQL.
+A small RESTful Notes API built with Rust, Axum, SQLx, and PostgreSQL.
 
-This project was built to learn and demonstrate backend development in Rust, including REST API design, database integration, Docker-based development, and asynchronous programming.
+The project demonstrates backend fundamentals including REST API design, asynchronous Rust, PostgreSQL persistence, database migrations, Docker-based development, input validation, pagination, structured error handling, and basic automated tests.
 
 ## Tech Stack
 
-* Rust
-* Axum
-* SQLx
-* PostgreSQL
-* Docker & Docker Compose
-* Serde
-* Tokio
+- Rust 2024
+- Axum
+- SQLx
+- PostgreSQL
+- Tokio
+- Docker & Docker Compose
+- Serde / serde_json
+- Tracing
 
 ## Features
 
-* Health check endpoint
-* Create notes
-* List notes with pagination
-* Retrieve a note by ID
-* Update notes
-* Delete notes
-* PostgreSQL persistence
-* UUID-based note IDs
-* Dockerized PostgreSQL and pgAdmin setup
+- Health check endpoint
+- Create, read, update, and delete notes
+- Pagination with validated `page` and `limit` parameters
+- UUID-based note IDs
+- Optional categories
+- Published/unpublished notes
+- Input validation
+- Centralized API error responses
+- Automatic SQLx migrations on application startup
+- PostgreSQL and pgAdmin through Docker Compose
+- Request tracing
+- Basic router tests
 
 ## Project Structure
 
@@ -33,6 +37,7 @@ axum-notes-api/
 ├── migrations/
 │   └── 001_create_notes.sql
 ├── src/
+│   ├── error.rs
 │   ├── handler.rs
 │   ├── main.rs
 │   ├── model.rs
@@ -42,7 +47,8 @@ axum-notes-api/
 ├── .gitignore
 ├── Cargo.lock
 ├── Cargo.toml
-└── docker-compose.yml
+├── docker-compose.yml
+└── README.md
 ```
 
 ## Getting Started
@@ -54,17 +60,13 @@ git clone https://github.com/joaorodrigues0764/axum-notes-api.git
 cd axum-notes-api
 ```
 
-### 2. Create the environment file
-
-Copy `.env.example` to `.env`:
+### 2. Configure environment variables
 
 ```bash
 cp .env.example .env
 ```
 
-Update the values in `.env` as needed.
-
-The `.env` file is intentionally ignored by Git and must not be committed.
+Edit `.env` with local values. Do not commit `.env`.
 
 ### 3. Start PostgreSQL and pgAdmin
 
@@ -72,126 +74,82 @@ The `.env` file is intentionally ignored by Git and must not be committed.
 docker compose up -d
 ```
 
-Check that the containers are running:
+Check the services:
 
 ```bash
-docker ps
+docker compose ps
 ```
 
-### 4. Create the database table
-
-For a fresh database, apply the migration:
-
-```bash
-docker exec -i postgres psql -U admin -d rust_sqlx < migrations/001_create_notes.sql
-```
-
-### 5. Run the API
+### 4. Run the API
 
 ```bash
 cargo run
 ```
 
-The API will start on:
+Database migrations are applied automatically when the application starts.
+
+The API is available at:
 
 ```text
 http://127.0.0.1:8000
 ```
 
-## API Endpoints
-
-### Health Check
-
-```http
-GET /api/healthchecker
-```
-
-### List Notes
-
-```http
-GET /api/notes
-```
-
-Optional pagination parameters:
+pgAdmin is available at:
 
 ```text
-?page=1&limit=10
+http://127.0.0.1:5050
 ```
 
-### Create Note
+## API Endpoints
 
-```http
-POST /api/notes/
-Content-Type: application/json
-```
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/healthchecker` | Health check |
+| GET | `/api/notes` | List notes |
+| POST | `/api/notes` | Create a note |
+| GET | `/api/notes/:id` | Get a note |
+| PATCH | `/api/notes/:id` | Update a note |
+| DELETE | `/api/notes/:id` | Delete a note |
 
-Example request:
+> On Axum 0.8, path parameters use the `{id}` syntax internally in the router. The HTTP endpoint remains `/api/notes/<uuid>`.
 
-```json
-{
-  "title": "My first note",
-  "content": "Learning Rust and Axum",
-  "category": "programming"
-}
-```
-
-### Get Note
-
-```http
-GET /api/notes/:id
-```
-
-### Update Note
-
-```http
-PATCH /api/notes/:id
-Content-Type: application/json
-```
-
-Example request:
-
-```json
-{
-  "title": "Updated note",
-  "content": "Learning Rust, Axum, SQLx and PostgreSQL",
-  "category": "rust",
-  "published": true
-}
-```
-
-### Delete Note
-
-```http
-DELETE /api/notes/:id
-```
-
-## Example
-
-Create a note:
+### List notes with pagination
 
 ```bash
-curl -X POST http://127.0.0.1:8000/api/notes/ \
+curl "http://127.0.0.1:8000/api/notes?page=1&limit=10"
+```
+
+`limit` must be between 1 and 100.
+
+### Create a note
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/notes \
   -H "Content-Type: application/json" \
   -d '{
     "title": "My first note",
     "content": "Learning Rust and Axum",
-    "category": "programming"
+    "category": "programming",
+    "published": false
   }'
 ```
 
-Then retrieve all notes:
+### Update a note
 
 ```bash
-curl http://127.0.0.1:8000/api/notes
+curl -X PATCH http://127.0.0.1:8000/api/notes/<UUID> \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Updated note",
+    "published": true
+  }'
 ```
 
-## Database
+### Delete a note
 
-PostgreSQL runs inside Docker and is exposed locally on port `6500`.
-
-pgAdmin is available locally on port `5050`.
-
-Database configuration is provided through environment variables in `.env`.
+```bash
+curl -X DELETE http://127.0.0.1:8000/api/notes/<UUID>
+```
 
 ## Development
 
@@ -207,12 +165,24 @@ Check the project:
 cargo check
 ```
 
+Run Clippy:
+
+```bash
+cargo clippy --all-targets --all-features
+```
+
 Run tests:
 
 ```bash
 cargo test
 ```
 
-## License
+## Database
 
-This project is for educational and portfolio purposes.
+PostgreSQL is exposed locally on port `6500` and pgAdmin on port `5050`.
+
+SQLx embeds the migration files into the binary and applies pending migrations at startup.
+
+## Project Status
+
+Educational and portfolio project focused on learning backend development with Rust.
