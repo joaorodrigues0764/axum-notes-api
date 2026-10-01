@@ -1,22 +1,22 @@
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
-#[derive(Deserialize, Debug, Default)]
+#[derive(Debug, Deserialize, Default)]
 pub struct FilterOptions {
-    pub page: Option<usize>,
-    pub limit: Option<usize>,
+    pub page: Option<u32>,
+    pub limit: Option<u32>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct CreateNoteSchema {
     pub title: String,
     pub content: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub category: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub published: Option<bool>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct UpdateNoteSchema {
     pub title: Option<String>,
     pub content: Option<String>,
